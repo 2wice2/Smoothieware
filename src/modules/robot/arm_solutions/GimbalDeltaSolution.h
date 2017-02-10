@@ -5,21 +5,22 @@
 
 class Config;
 
-class LinearDeltaSolution : public BaseSolution {
+class GimbalDeltaSolution : public BaseSolution {
     public:
-        LinearDeltaSolution(Config*);
+        GimbalDeltaSolution(Config*);
         void cartesian_to_actuator(const float[], ActuatorCoordinates &) const override;
         void actuator_to_cartesian(const ActuatorCoordinates &, float[] ) const override;
 
-        bool set_optional(const arm_options_t& options) override;
-        bool get_optional(arm_options_t& options, bool force_all) const override;
+        bool set_optional(const gimbal_options_t& options) override;
+        bool get_optional(gimbal_options_t& options, bool force_all) const override;
 
     private:
         void init();
 
-        float arm_length;
+        #float arm_length;
+		float gimbal_height
         float arm_radius;
-        float arm_length_squared;
+        float gimbal_height_squared;
 
         float delta_tower1_x;
         float delta_tower1_y;

@@ -20,6 +20,7 @@
 #include "arm_solutions/CartesianSolution.h"
 #include "arm_solutions/RotatableCartesianSolution.h"
 #include "arm_solutions/LinearDeltaSolution.h"
+#include "arm_solutions/GimbalDeltaSolution.h"
 #include "arm_solutions/RotaryDeltaSolution.h"
 #include "arm_solutions/HBotSolution.h"
 #include "arm_solutions/CoreXZSolution.h"
@@ -61,6 +62,7 @@
 #define  rotatable_cartesian_checksum        CHECKSUM("rotatable_cartesian")
 #define  rostock_checksum                    CHECKSUM("rostock")
 #define  linear_delta_checksum               CHECKSUM("linear_delta")
+#define  gimbal_delta_checksum               CHECKSUM("Gimbal_delta")
 #define  rotary_delta_checksum               CHECKSUM("rotary_delta")
 #define  delta_checksum                      CHECKSUM("delta")
 #define  hbot_checksum                       CHECKSUM("hbot")
@@ -155,6 +157,9 @@ void Robot::load_config()
 
     } else if(solution_checksum == rotary_delta_checksum) {
         this->arm_solution = new RotaryDeltaSolution(THEKERNEL->config);
+		
+	} else if(solution_checksum == gimbal_delta_checksum) {
+        this->arm_solution = new GimbalDeltaSolution(THEKERNEL->config);			
 
     } else if(solution_checksum == morgan_checksum) {
         this->arm_solution = new MorganSCARASolution(THEKERNEL->config);
