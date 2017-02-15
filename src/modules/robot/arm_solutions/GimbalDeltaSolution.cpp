@@ -64,17 +64,17 @@ void GimbalDeltaSolution::cartesian_to_actuator(const float cartesian_mm[], Actu
 {
 
     actuator_mm[ALPHA_STEPPER] = sqrtf(this->gimbal_height_squared
-                                       - SQ(delta_tower1_x - cartesian_mm[X_AXIS])
-                                       - SQ(delta_tower1_y - cartesian_mm[Y_AXIS])
-                                      ) + cartesian_mm[Z_AXIS];
+                                       + SQ(delta_tower1_x - cartesian_mm[X_AXIS])
+                                       + SQ(delta_tower1_y - cartesian_mm[Y_AXIS])
+                                      ) - cartesian_mm[Z_AXIS];
     actuator_mm[BETA_STEPPER ] = sqrtf(this->gimbal_height_squared
-                                       - SQ(delta_tower2_x - cartesian_mm[X_AXIS])
-                                       - SQ(delta_tower2_y - cartesian_mm[Y_AXIS])
-                                      ) + cartesian_mm[Z_AXIS];
+                                       + SQ(delta_tower2_x - cartesian_mm[X_AXIS])
+                                       + SQ(delta_tower2_y - cartesian_mm[Y_AXIS])
+                                      ) - cartesian_mm[Z_AXIS];
     actuator_mm[GAMMA_STEPPER] = sqrtf(this->gimbal_height_squared
-                                       - SQ(delta_tower3_x - cartesian_mm[X_AXIS])
-                                       - SQ(delta_tower3_y - cartesian_mm[Y_AXIS])
-                                      ) + cartesian_mm[Z_AXIS];
+                                       + SQ(delta_tower3_x - cartesian_mm[X_AXIS])
+                                       + SQ(delta_tower3_y - cartesian_mm[Y_AXIS])
+                                      ) - cartesian_mm[Z_AXIS];
 }
 
 void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actuator_mm, float cartesian_mm[] ) const
