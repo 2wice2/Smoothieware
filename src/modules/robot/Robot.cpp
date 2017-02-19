@@ -62,7 +62,7 @@
 #define  rotatable_cartesian_checksum        CHECKSUM("rotatable_cartesian")
 #define  rostock_checksum                    CHECKSUM("rostock")
 #define  linear_delta_checksum               CHECKSUM("linear_delta")
-#define  gimbal_delta_checksum               CHECKSUM("Gimbal_delta")
+#define  gimbal_delta_checksum               CHECKSUM("gimbal_delta")
 #define  rotary_delta_checksum               CHECKSUM("rotary_delta")
 #define  delta_checksum                      CHECKSUM("delta")
 #define  hbot_checksum                       CHECKSUM("hbot")

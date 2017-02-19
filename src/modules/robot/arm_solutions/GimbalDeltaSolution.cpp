@@ -10,16 +10,16 @@
 #include "Vector3.h"
 
 
-//#define arm_length_checksum         CHECKSUM("arm_length")
-#define arm_radius_checksum         CHECKSUM("arm_radius")
-#define gimbal_height_checksum      CHECKSUM("gimbal_height")
+#define gimbal_delta_radius_checksum  CHECKSUM("gimbal_delta_radius")
+#define gimbal_height_checksum        CHECKSUM("gimbal_height")
+#define arm_radius_checksum           CHECKSUM("arm_radius")
 
-#define tower1_offset_checksum      CHECKSUM("delta_tower1_offset")
-#define tower2_offset_checksum      CHECKSUM("delta_tower2_offset")
-#define tower3_offset_checksum      CHECKSUM("delta_tower3_offset")
-#define tower1_angle_checksum       CHECKSUM("delta_tower1_angle")
-#define tower2_angle_checksum       CHECKSUM("delta_tower2_angle")
-#define tower3_angle_checksum       CHECKSUM("delta_tower3_angle")
+#define tower1_offset_checksum        CHECKSUM("delta_tower1_offset")
+#define tower2_offset_checksum        CHECKSUM("delta_tower2_offset")
+#define tower3_offset_checksum        CHECKSUM("delta_tower3_offset")
+#define tower1_angle_checksum         CHECKSUM("delta_tower1_angle")
+#define tower2_angle_checksum         CHECKSUM("delta_tower2_angle")
+#define tower3_angle_checksum         CHECKSUM("delta_tower3_angle")
 
 #define SQ(x) powf(x, 2)
 #define ROUND(x, y) (roundf(x * (float)(1e ## y)) / (float)(1e ## y))
@@ -27,12 +27,10 @@
 
 GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
 {
-    // arm_length is the length of the arm from hinge to hinge
-    //arm_length = config->value(arm_length_checksum)->by_default(250.0f)->as_number();
-    // arm_radius is the horizontal distance from hinge to hinge when the effector is centered
-    arm_radius = config->value(arm_radius_checksum)->by_default(124.0f)->as_number();
-	//gimbal_height is the height of the gimbal center from the base, takes the place of arm_length as the static lenght
-	gimbal_height = config->value(gimbal_height_checksum)->by_default(450.0f)->as_number();
+    //gimbal_height is the height of the gimbal center from the base, takes the place of arm_length as the static lenght
+	gimbal_height = config->value(gimbal_height_checksum)->by_default(354.85f)->as_number();
+	//This is the horizontal distance between top gimbal pivot and bottom pivot
+	arm_radius = config->value(arm_radius_checksum)->by_default(209.74f)->as_number();
 	
     tower1_angle = config->value(tower1_angle_checksum)->by_default(0.0f)->as_number();
     tower2_angle = config->value(tower2_angle_checksum)->by_default(0.0f)->as_number();
@@ -46,7 +44,7 @@ GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
 
 void GimbalDeltaSolution::init()
 {
-    //arm_length_squared = SQ(arm_length);
+    //gimbal_height_squared = SQ(gimbal_height);
 	gimbal_height_squared = SQ(gimbal_height);
 	
     // Effective X/Y positions of the three vertical towers.
@@ -62,19 +60,17 @@ void GimbalDeltaSolution::init()
 
 void GimbalDeltaSolution::cartesian_to_actuator(const float cartesian_mm[], ActuatorCoordinates &actuator_mm ) const
 {
-
-    actuator_mm[ALPHA_STEPPER] = sqrtf(this->gimbal_height_squared
-                                       + SQ(delta_tower1_x - cartesian_mm[X_AXIS])
-                                       + SQ(delta_tower1_y - cartesian_mm[Y_AXIS])
-                                      ) - cartesian_mm[Z_AXIS];
-    actuator_mm[BETA_STEPPER ] = sqrtf(this->gimbal_height_squared
-                                       + SQ(delta_tower2_x - cartesian_mm[X_AXIS])
-                                       + SQ(delta_tower2_y - cartesian_mm[Y_AXIS])
-                                      ) - cartesian_mm[Z_AXIS];
-    actuator_mm[GAMMA_STEPPER] = sqrtf(this->gimbal_height_squared
-                                       + SQ(delta_tower3_x - cartesian_mm[X_AXIS])
-                                       + SQ(delta_tower3_y - cartesian_mm[Y_AXIS])
-                                      ) - cartesian_mm[Z_AXIS];
+    actuator_mm[ALPHA_STEPPER] = sqrtf(this->SQ(delta_tower1_x - cartesian_mm[X_AXIS]) 
+                                            + SQ(delta_tower1_y - cartesian_mm[Y_AXIS]) 
+                                            + SQ(gimbal_height - cartesian_mm[Z_AXIS]));
+									  
+	actuator_mm[BETA_STEPPER ] = sqrtf(this->SQ(delta_tower2_x - cartesian_mm[X_AXIS]) 
+                                            + SQ(delta_tower2_y - cartesian_mm[Y_AXIS]) 
+                                            + SQ(gimbal_height - cartesian_mm[Z_AXIS]));
+											
+    actuator_mm[GAMMA_STEPPER] = sqrtf(this->SQ(delta_tower3_x - cartesian_mm[X_AXIS]) 
+                                            + SQ(delta_tower3_y - cartesian_mm[Y_AXIS]) 
+                                            + SQ(gimbal_height - cartesian_mm[Z_AXIS]));
 }
 
 void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actuator_mm, float cartesian_mm[] ) const
