@@ -24,12 +24,14 @@
 #define SQ(x) powf(x, 2)
 #define ROUND(x, y) (roundf(x * (float)(1e ## y)) / (float)(1e ## y))
 #define PIOVER180   0.01745329251994329576923690768489F
+#define COS60       0.5
+#define SIN60       (sqrtf(3)/2)
 
 GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
 {
-    //gimbal_height is the height of the gimbal center from the base, takes the place of arm_length as the static lenght
+    //This is the height of the gimbal center from the bottom rod pivot
 	gimbal_height = config->value(gimbal_height_checksum)->by_default(354.85f)->as_number();
-	//This is the horizontal distance between top gimbal pivot and bottom pivot
+	//This is the horizontal distance between top gimbal pivot and bottom pivot when centered
 	arm_radius = config->value(arm_radius_checksum)->by_default(209.74f)->as_number();
 	
     tower1_angle = config->value(tower1_angle_checksum)->by_default(0.0f)->as_number();
@@ -45,7 +47,7 @@ GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
 void GimbalDeltaSolution::init()
 {
     //gimbal_height_squared = SQ(gimbal_height);
-	gimbal_height_squared = SQ(gimbal_height);
+	arm_radius_squared = SQ(arm_radius);
 	
     // Effective X/Y positions of the three vertical towers.
     float delta_radius = arm_radius;
@@ -61,55 +63,51 @@ void GimbalDeltaSolution::init()
 void GimbalDeltaSolution::cartesian_to_actuator(const float cartesian_mm[], ActuatorCoordinates &actuator_mm ) const
 {
     actuator_mm[ALPHA_STEPPER] = sqrtf(this->SQ(delta_tower1_x - cartesian_mm[X_AXIS]) 
-                                            + SQ(delta_tower1_y - cartesian_mm[Y_AXIS]) 
+                                            - SQ(delta_tower1_y - cartesian_mm[Y_AXIS]) 
                                             + SQ(gimbal_height - cartesian_mm[Z_AXIS]));
 									  
 	actuator_mm[BETA_STEPPER ] = sqrtf(this->SQ(delta_tower2_x - cartesian_mm[X_AXIS]) 
-                                            + SQ(delta_tower2_y - cartesian_mm[Y_AXIS]) 
+                                            - SQ(delta_tower2_y - cartesian_mm[Y_AXIS]) 
                                             + SQ(gimbal_height - cartesian_mm[Z_AXIS]));
 											
     actuator_mm[GAMMA_STEPPER] = sqrtf(this->SQ(delta_tower3_x - cartesian_mm[X_AXIS]) 
-                                            + SQ(delta_tower3_y - cartesian_mm[Y_AXIS]) 
+                                            - SQ(delta_tower3_y - cartesian_mm[Y_AXIS]) 
                                             + SQ(gimbal_height - cartesian_mm[Z_AXIS]));
 }
 
 void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actuator_mm, float cartesian_mm[] ) const
 {
-    // from http://en.wikipedia.org/wiki/Circumscribed_circle#Barycentric_coordinates_from_cross-_and_dot-products
-    // based on https://github.com/ambrop72/aprinter/blob/2de69a/aprinter/printer/DeltaTransform.h#L81
-    Vector3 tower1( delta_tower1_x, delta_tower1_y, actuator_mm[0] );
-    Vector3 tower2( delta_tower2_x, delta_tower2_y, actuator_mm[1] );
-    Vector3 tower3( delta_tower3_x, delta_tower3_y, actuator_mm[2] );
+    //tranlate all towers down so that Tower3(Gamma) lies on (0,0)
+	float ttower1_x = delta_tower1_x;
+	float ttower1_y = delta_tower1_y - arm_radius;
+	float ttower2_x = delta_tower2_x;
+	float ttower2_y = delta_tower2_y - arm_radius;
+	float ttower3_x = delta_tower3_x;
+	float ttower3_y = delta_tower3_y - arm_radius;
 
-    Vector3 s12 = tower1.sub(tower2);
-    Vector3 s23 = tower2.sub(tower3);
-    Vector3 s13 = tower1.sub(tower3);
+	//Rotate all towers around (0,0) so that towers 3 & 2 lie on the x-axis
+	float rtower1_x = delta_tower1_x * COS60 - delta_tower1_y * SIN60;
+	float rtower1_y = delta_tower1_x * SIN60 + delta_tower1_y * COS60;
+	float rtower2_x = delta_tower1_x * COS60 - delta_tower1_y * SIN60;
+	float rtower2_y = delta_tower1_x * SIN60 + delta_tower1_y * COS60;
+	float rtower3_x = ttower3_x;      //already on (0,0)
+	float rtower3_y = ttower3_y;      //already on (0,0)
+	
+	float tower1_radius = actuator_mm[0];
+    float tower2_radius = actuator_mm[1];
+    float tower3_radius = actuator_mm[2];
+	
+	//find the x coord of intersect between sphere 1 & 2
+	float intersect_x = (SQ(tower3_radius) - SQ(tower2_radius) + SQ(ttower2_x)) / ( 2 * ttower2_x);
+    //find the y coord of intersect between sphere 1 & 2
+	float intersect_y = (SQ(tower3_radius) - SQ(tower1_radius) + SQ(ttower1_x) + SQ(ttower1_y)) / ( 2 * ttower1_y) 
+	                                    - (ttower1_x / ttower1_y) * intersect_x;
+	//find the z coord of intersect
+	float intersect_z = sqrtf(SQ(tower3_radius) - SQ(intersect_x) - SQ(intersect_y) );
 
-    Vector3 normal = s12.cross(s23);
-
-    float magsq_s12 = s12.magsq();
-    float magsq_s23 = s23.magsq();
-    float magsq_s13 = s13.magsq();
-
-    float inv_nmag_sq = 1.0F / normal.magsq();
-    float q = 0.5F * inv_nmag_sq;
-
-    float a = q * magsq_s23 * s12.dot(s13);
-    float b = q * magsq_s13 * s12.dot(s23) * -1.0F; // negate because we use s12 instead of s21
-    float c = q * magsq_s12 * s13.dot(s23);
-
-    Vector3 circumcenter( delta_tower1_x * a + delta_tower2_x * b + delta_tower3_x * c,
-                          delta_tower1_y * a + delta_tower2_y * b + delta_tower3_y * c,
-                          actuator_mm[0] * a + actuator_mm[1] * b + actuator_mm[2] * c );
-
-    float r_sq = 0.5F * q * magsq_s12 * magsq_s23 * magsq_s13;
-    float dist = sqrtf(inv_nmag_sq * (gimbal_height_squared - r_sq));
-
-    Vector3 cartesian = circumcenter.sub(normal.mul(dist));
-
-    cartesian_mm[0] = ROUND(cartesian[0], 4);
-    cartesian_mm[1] = ROUND(cartesian[1], 4);
-    cartesian_mm[2] = ROUND(cartesian[2], 4);
+	cartesian_mm[0] = ROUND(intersect_x, 4);
+    cartesian_mm[1] = ROUND(intersect_y, 4);
+    cartesian_mm[2] = ROUND(intersect_z, 4);
 }
 
 bool GimbalDeltaSolution::set_optional(const gimbal_options_t& options)
