@@ -22,10 +22,12 @@
 #define tower3_angle_checksum         CHECKSUM("delta_tower3_angle")
 
 #define SQ(x) powf(x, 2)
-#define ROUND(x, y) (roundf(x * (float)(1e ## y)) / (float)(1e ## y))
-#define PIOVER180   0.01745329251994329576923690768489F
-#define COS60       0.5
-#define SIN60       (sqrtf(3)/2)
+#define ROUND(x, y)       (roundf(x * (float)(1e ## y)) / (float)(1e ## y))
+#define PIOVER180         0.01745329251994329576923690768489F
+#define COS60             0.5
+#define SIN60             (sqrtf(3)/2)
+     
+    
 
 GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
 {
@@ -86,10 +88,10 @@ void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actua
 	float ttower3_y = delta_tower3_y - arm_radius;
 
 	//Rotate all towers around (0,0) so that towers 3 & 2 lie on the x-axis
-	float rtower1_x = delta_tower1_x * COS60 - delta_tower1_y * SIN60;
-	float rtower1_y = delta_tower1_x * SIN60 + delta_tower1_y * COS60;
-	float rtower2_x = delta_tower1_x * COS60 - delta_tower1_y * SIN60;
-	float rtower2_y = delta_tower1_x * SIN60 + delta_tower1_y * COS60;
+	float rtower1_x = ttower1_x * COS60 - ttower1_y * SIN60;
+	float rtower1_y = ttower1_x * SIN60 + ttower1_y * COS60;
+	float rtower2_x = ttower2_x * COS60 - ttower2_y * SIN60;
+	float rtower2_y = ttower2_x * SIN60 + ttower2_y * COS60;
 	float rtower3_x = ttower3_x;      //already on (0,0)
 	float rtower3_y = ttower3_y;      //already on (0,0)
 	
@@ -104,6 +106,9 @@ void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actua
 	                                    - (ttower1_x / ttower1_y) * intersect_x;
 	//find the z coord of intersect
 	float intersect_z = sqrtf(SQ(tower3_radius) - SQ(intersect_x) - SQ(intersect_y) );
+	
+	//translate and rotate back to cartesian
+	//Todo
 
 	cartesian_mm[0] = ROUND(intersect_x, 4);
     cartesian_mm[1] = ROUND(intersect_y, 4);
