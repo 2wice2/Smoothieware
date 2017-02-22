@@ -88,10 +88,10 @@ void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actua
 	float ttower3_y = delta_tower3_y - arm_radius;
 
 	//Rotate all towers around (0,0) so that towers 3 & 2 lie on the x-axis
-	float rtower1_x = ttower1_x * COS60 - ttower1_y * SIN60;
-	float rtower1_y = ttower1_x * SIN60 + ttower1_y * COS60;
-	float rtower2_x = ttower2_x * COS60 - ttower2_y * SIN60;
-	float rtower2_y = ttower2_x * SIN60 + ttower2_y * COS60;
+	float rtower1_x = (ttower1_x * COS60) - (ttower1_y * SIN60);
+	float rtower1_y = (ttower1_x * SIN60) + (ttower1_y * COS60);
+	float rtower2_x = (ttower2_x * COS60) - (ttower2_y * SIN60);
+	float rtower2_y = (ttower2_x * SIN60) + (ttower2_y * COS60);
 	float rtower3_x = ttower3_x;      //already on (0,0)
 	float rtower3_y = ttower3_y;      //already on (0,0)
 	
@@ -100,19 +100,22 @@ void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actua
     float tower3_radius = actuator_mm[2];
 	
 	//find the x coord of intersect between sphere 1 & 2
-	float intersect_x = (SQ(tower3_radius) - SQ(tower2_radius) + SQ(ttower2_x)) / ( 2 * ttower2_x);
+	float intersect_x = (SQ(tower3_radius) - SQ(tower2_radius) + SQ(rtower2_x)) / ( 2 * rtower2_x);
     //find the y coord of intersect between sphere 1 & 2
-	float intersect_y = (SQ(tower3_radius) - SQ(tower1_radius) + SQ(ttower1_x) + SQ(ttower1_y)) / ( 2 * ttower1_y) 
-	                                    - (ttower1_x / ttower1_y) * intersect_x;
+	float intersect_y = (SQ(tower3_radius) - SQ(tower1_radius) + SQ(rtower1_x) + SQ(rtower1_y)) / ( 2 * rtower1_y) 
+	                                    - (rtower1_x / rtower1_y) * intersect_x;
 	//find the z coord of intersect
 	float intersect_z = sqrtf(SQ(tower3_radius) - SQ(intersect_x) - SQ(intersect_y) );
 	
 	//translate and rotate back to cartesian
-	//Todo
-
-	cartesian_mm[0] = ROUND(intersect_x, 4);
-    cartesian_mm[1] = ROUND(intersect_y, 4);
-    cartesian_mm[2] = ROUND(intersect_z, 4);
+	float nr_intersect_x = (intersect_x * COS60 + intersect_y * SIN60);
+	float nr_intersect_y = (-intersect_x * SIN60 + ttower1_y * COS60) + arm_radius;
+	
+	float nr_intersect_z = intersect_z + gimbal_height;
+	
+	cartesian_mm[0] = ROUND(nr_intersect_x, 4);
+    cartesian_mm[1] = ROUND(nr_intersect_y, 4);
+    cartesian_mm[2] = ROUND(nr_intersect_z, 4);
 }
 
 bool GimbalDeltaSolution::set_optional(const gimbal_options_t& options)
