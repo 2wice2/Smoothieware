@@ -12,6 +12,7 @@ deploy
 debug
 /mbed/src/Debug/
 /mbed/src/Release/
+/mbed/src/nul
 /LPC1768/
 /mbed/drop/
 /gcc-arm-none-eabi/
