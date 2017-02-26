@@ -21,15 +21,13 @@
 #define tower2_angle_checksum         CHECKSUM("delta_tower2_angle")
 #define tower3_angle_checksum         CHECKSUM("delta_tower3_angle")
 
-#define SQ(x) powf(x, 2)
+#define SQ(x)             x * x
 #define ROUND(x, y)       (roundf(x * (float)(1e ## y)) / (float)(1e ## y))
 #define PIOVER180         0.01745329251994329576923690768489F
 #define COS60             0.5
 #define SIN60             (sqrtf(3)/2)
      
-    
-
-GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
+   GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
 {
     //This is the height of the gimbal center from the bottom rod pivot
 	gimbal_height = config->value(gimbal_height_checksum)->by_default(354.85f)->as_number();
@@ -49,7 +47,7 @@ GimbalDeltaSolution::GimbalDeltaSolution(Config* config)
 void GimbalDeltaSolution::init()
 {
     //gimbal_height_squared = SQ(gimbal_height);
-	arm_radius_squared = SQ(arm_radius);
+	//float arm_radius_squared = SQ(arm_radius);
 	
     // Effective X/Y positions of the three vertical towers.
     float delta_radius = arm_radius;
@@ -84,16 +82,16 @@ void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actua
 	float ttower1_y = delta_tower1_y - arm_radius;
 	float ttower2_x = delta_tower2_x;
 	float ttower2_y = delta_tower2_y - arm_radius;
-	float ttower3_x = delta_tower3_x;
-	float ttower3_y = delta_tower3_y - arm_radius;
+	//float ttower3_x = delta_tower3_x;                    Not used in Trilateration
+	//float ttower3_y = delta_tower3_y - arm_radius;       Not used in Trilateration 
 
 	//Rotate all towers around (0,0) so that towers 3 & 2 lie on the x-axis
-	float rtower1_x = (ttower1_x * COS60) - (ttower1_y * SIN60);
-	float rtower1_y = (ttower1_x * SIN60) + (ttower1_y * COS60);
-	float rtower2_x = (ttower2_x * COS60) - (ttower2_y * SIN60);
-	float rtower2_y = (ttower2_x * SIN60) + (ttower2_y * COS60);
-	float rtower3_x = ttower3_x;      //already on (0,0)
-	float rtower3_y = ttower3_y;      //already on (0,0)
+	float rtower1_x = ttower1_x * COS60 - ttower1_y * SIN60;
+	float rtower1_y = ttower1_x * SIN60 + ttower1_y * COS60;
+	float rtower2_x = ttower2_x * COS60 - ttower2_y * SIN60;
+	//float rtower2_y = ttower2_x * SIN60 + ttower2_y * COS60; Not used in Trilateration
+	//float rtower3_x = ttower3_x;      //already on (0,0) Not used in Trilateration
+	//float rtower3_y = ttower3_y;      //already on (0,0) Not used in Trilateration
 	
 	float tower1_radius = actuator_mm[0];
     float tower2_radius = actuator_mm[1];
@@ -111,6 +109,7 @@ void GimbalDeltaSolution::actuator_to_cartesian(const ActuatorCoordinates &actua
 	float nr_intersect_x = (intersect_x * COS60 + intersect_y * SIN60);
 	float nr_intersect_y = (-intersect_x * SIN60 + ttower1_y * COS60) + arm_radius;
 	
+	//Trilateration is done on Z=0, translate Z to actual 
 	float nr_intersect_z = intersect_z + gimbal_height;
 	
 	cartesian_mm[0] = ROUND(nr_intersect_x, 4);

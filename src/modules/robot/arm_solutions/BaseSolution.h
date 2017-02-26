@@ -15,10 +15,9 @@ class BaseSolution {
         virtual void cartesian_to_actuator(const float[], ActuatorCoordinates &) const = 0;
         virtual void actuator_to_cartesian(const ActuatorCoordinates &, float[]) const = 0;
         typedef std::map<char, float> arm_options_t;
+		typedef std::map<char, float> gimbal_options_t;
         virtual bool set_optional(const arm_options_t& options) { return false; };
         virtual bool get_optional(arm_options_t& options, bool force_all= false) const { return false; };
-		virtual bool set_optional(const gimbal_options_t& options) { return false; };
-        virtual bool get_optional(gimbal_options_t& options, bool force_all= false) const { return false; };
 		
 };
 

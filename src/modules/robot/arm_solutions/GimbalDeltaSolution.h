@@ -17,10 +17,10 @@ class GimbalDeltaSolution : public BaseSolution {
     private:
         void init();
 
-        float gimbal_height
+        float gimbal_height;
 		float gimbal_height_squared;
 		float arm_radius;
-                
+               
 		float delta_tower1_x;
         float delta_tower1_y;
         float delta_tower2_x;

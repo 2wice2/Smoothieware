@@ -799,7 +799,7 @@ void Robot::on_gcode_received(void *argument)
                     }
                     gcode->stream->printf("\n");
                 }
-
+				
                 // save wcs_offsets and current_wcs
                 // TODO this may need to be done whenever they change to be compliant
                 gcode->stream->printf(";WCS settings\n");
